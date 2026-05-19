@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GROUP_NAME="classa_stuff"
+GROUP_NAME="classa_staff"
 USERS=("platform_admin" "content_editor" "support_user")
 
 echo "Creating group: $GROUP_NAME"
