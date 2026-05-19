@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Class A Education — NETS Homework</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f3eee5;
+            --bg-grid: rgba(26, 26, 26, 0.04);
+            --surface: #fdfaf3;
+            --surface-edge: #ebe4d4;
+            --ink: #161616;
+            --ink-soft: #4a4a4a;
+            --muted: #8a8478;
+            --hairline: #d9d2c2;
+            --accent: #2d6a4f;
+            --accent-soft: rgba(45, 106, 79, 0.12);
+            --accent-glow: rgba(45, 106, 79, 0.35);
+            --warn: #c2410c;
+            --shadow: 0 1px 2px rgba(20, 14, 0, 0.04),
+                      0 8px 24px -8px rgba(20, 14, 0, 0.08),
+                      0 32px 64px -32px rgba(20, 14, 0, 0.12);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0c0c0d;
+            --bg-grid: rgba(245, 241, 234, 0.04);
+            --surface: #141416;
+            --surface-edge: #1f1f22;
+            --ink: #f1ede4;
+            --ink-soft: #c8c2b5;
+            --muted: #6f6a5e;
+            --hairline: #25252a;
+            --accent: #6ed29c;
+            --accent-soft: rgba(110, 210, 156, 0.10);
+            --accent-glow: rgba(110, 210, 156, 0.45);
+            --warn: #f97316;
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+                      0 8px 24px -8px rgba(0, 0, 0, 0.5),
+                      0 32px 64px -32px rgba(0, 0, 0, 0.6);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Fraunces', Georgia, serif;
+            font-feature-settings: "ss01", "ss02";
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        body {
+            background-image:
+                linear-gradient(var(--bg-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+            background-size: 48px 48px;
+            background-position: -1px -1px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top bar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px 40px;
+            border-bottom: 1px solid var(--hairline);
+            background: color-mix(in srgb, var(--bg) 85%, transparent);
+            backdrop-filter: blur(8px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .brand-mark {
+            width: 26px; height: 26px;
+            border: 1.5px solid var(--ink);
+            display: grid;
+            place-items: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--ink);
+            transition: border-color 0.4s, color 0.4s;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--hairline);
+            color: var(--ink-soft);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 8px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            border-radius: 999px;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--ink);
+            color: var(--ink);
+        }
+
+        .theme-toggle svg {
+            width: 14px; height: 14px;
+        }
+
+        .theme-toggle .sun { display: none; }
+        [data-theme="dark"] .theme-toggle .sun { display: block; }
+        [data-theme="dark"] .theme-toggle .moon { display: none; }
+        [data-theme="dark"] .theme-toggle .label-light { display: none; }
+        .theme-toggle .label-dark { display: none; }
+        [data-theme="dark"] .theme-toggle .label-dark { display: block; }
+
+        /* Main */
+        main {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            padding: 60px 24px;
+        }
+
+        .card {
+            width: min(720px, 100%);
+            background: var(--surface);
+            border: 1px solid var(--surface-edge);
+            box-shadow: var(--shadow);
+            padding: 56px 56px 0;
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.4s, border-color 0.4s;
+        }
+
+        /* Corner ornaments */
+        .card::before,
+        .card::after {
+            content: '';
+            position: absolute;
+            width: 14px; height: 14px;
+            border-color: var(--ink);
+        }
+        .card::before {
+            top: 14px; left: 14px;
+            border-top: 1px solid; border-left: 1px solid;
+        }
+        .card::after {
+            top: 14px; right: 14px;
+            border-top: 1px solid; border-right: 1px solid;
+        }
+
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .eyebrow::before {
+            content: '';
+            width: 24px;
+            height: 1px;
+            background: var(--muted);
+        }
+
+        h1 {
+            font-family: 'Fraunces', serif;
+            font-weight: 400;
+            font-size: clamp(36px, 5vw, 56px);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+
+        h1 .slash {
+            color: var(--muted);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        h1 em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--ink-soft);
+        }
+
+        .lede {
+            font-family: 'Fraunces', serif;
+            font-size: 17px;
+            line-height: 1.55;
+            color: var(--ink-soft);
+            max-width: 48ch;
+            margin-bottom: 44px;
+        }
+
+        /* Status pill */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 22px;
+            background: var(--accent-soft);
+            border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+            margin-bottom: 48px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .pulse-dot {
+            position: relative;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.4;
+            animation: pulse 1.8s ease-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        .status-label {
+            color: var(--ink);
+            font-weight: 500;
+            letter-spacing: 0.04em;
+        }
+
+        .status-meta {
+            color: var(--muted);
+            margin-left: auto;
+            font-size: 12px;
+        }
+
+        /* Metadata grid */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            border-top: 1px solid var(--hairline);
+            margin: 0 -56px;
+        }
+
+        .meta-cell {
+            padding: 22px 28px;
+            border-right: 1px solid var(--hairline);
+            border-bottom: 1px solid var(--hairline);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .meta-cell:nth-child(2n) { border-right: none; }
+
+        .meta-label {
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        .meta-value .accent-text {
+            color: var(--accent);
+        }
+
+        /* Footer */
+        footer {
+            padding: 24px 40px;
+            border-top: 1px solid var(--hairline);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+        }
+
+        footer .blink {
+            display: inline-block;
+            animation: blink 1.2s steps(2) infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Entrance */
+        .card > * {
+            opacity: 0;
+            transform: translateY(8px);
+            animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+        }
+        .card > *:nth-child(1) { animation-delay: 0.05s; }
+        .card > *:nth-child(2) { animation-delay: 0.15s; }
+        .card > *:nth-child(3) { animation-delay: 0.25s; }
+        .card > *:nth-child(4) { animation-delay: 0.35s; }
+        .card > *:nth-child(5) { animation-delay: 0.45s; }
+
+        @keyframes rise {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 640px) {
+            .topbar { padding: 20px; }
+            .card { padding: 36px 28px 0; }
+            .meta-grid { margin: 0 -28px; grid-template-columns: 1fr; }
+            .meta-cell:nth-child(n) { border-right: none; }
+            .status-row { flex-wrap: wrap; }
+            .status-meta { margin-left: 0; width: 100%; padding-left: 24px; }
+            footer { padding: 20px; flex-direction: column; gap: 8px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">
+            <div class="brand-mark">N</div>
+            <span>NETS &nbsp;/&nbsp; Class A Education</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>
+            </svg>
+            <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            </svg>
+            <span class="label-light">Dark</span>
+            <span class="label-dark">Light</span>
+        </button>
+    </div>
+
+    <main>
+        <section class="card">
+            <div class="eyebrow">Platform Status · v0.1.0</div>
+
+            <h1>Class A Education <span class="slash">/</span> <em>NETS Homework</em></h1>
+
+            <p class="lede">Platform server demo running inside a Docker container. The homework engine is initialized and accepting connections.</p>
+
+            <div class="status-row">
+                <span class="pulse-dot" aria-hidden="true"></span>
+                <span class="status-label">Operational</span>
+                <span class="status-meta">uptime <span id="uptime">00:00:00</span></span>
+            </div>
+
+            <div class="meta-grid">
+                <div class="meta-cell">
+                    <div class="meta-label">Environment</div>
+                    <div class="meta-value">docker · linux/amd64</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-label">Service</div>
+                    <div class="meta-value">nets-homework-api</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-label">Region</div>
+                    <div class="meta-value">tashkent · uz-1</div>
+                </div>
+                <div class="meta-cell">
+                    <div class="meta-label">Health</div>
+                    <div class="meta-value"><span class="accent-text">●</span> all checks passing</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span>© Class A Education &nbsp;·&nbsp; NETS Platform</span>
+        <span><span id="clock">--:--:--</span> <span class="blink">_</span></span>
+    </footer>
+
+    <script>
+        // Theme persistence
+        const root = document.documentElement;
+        const toggle = document.getElementById('themeToggle');
+        const saved = localStorage.getItem('nets-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+
+        toggle.addEventListener('click', () => {
+            const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('nets-theme', next);
+        });
+
+        // Uptime + clock
+        const start = Date.now();
+        const pad = n => String(n).padStart(2, '0');
+        const fmt = ms => {
+            const s = Math.floor(ms / 1000);
+            return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+        };
+        setInterval(() => {
+            document.getElementById('uptime').textContent = fmt(Date.now() - start);
+            const d = new Date();
+            document.getElementById('clock').textContent =
+                `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }, 1000);
+    </script>
+</body>
+</html>

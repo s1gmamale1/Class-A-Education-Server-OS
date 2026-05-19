@@ -1,0 +1,72 @@
+#!/bin/bash
+
+BASE="/var/classa"
+
+echo "Creating Class A Education directory structure..."
+
+sudo mkdir -p "$BASE/course_materials"
+sudo mkdir -p "$BASE/uploads_exchange"
+sudo mkdir -p "$BASE/app/config"
+sudo mkdir -p "$BASE/app/logs"
+sudo mkdir -p "$BASE/app/data"
+sudo mkdir -p "$BASE/app/backups"
+
+echo "Creating sample files..."
+
+
+echo "Class A Education course public material: Lesson 1" | sudo tee "$BASE/course_materials/lesson1.txt" >/dev/null
+echo "Class A Education platform rules and student guide" | sudo tee "$BASE/course_materials/rules.txt" >/dev/null
+
+echo "Class A Education database connection settings placeholder" | sudo tee "$BASE/app/config/settings.conf" >/dev/null
+echo "Class A Education application log started" | sudo tee "$BASE/app/logs/server.log" >/dev/null
+echo "Class A Education sample homework session data" | sudo tee "$BASE/app/data/homework_session.txt" >/dev/null
+
+echo "Settings ownership..."
+
+sudo chown -R  platform_admin:classa_stuff "$BASE"
+
+echo "Setting permissions..."
+
+# Course Materials: readable by everyone, writeble by owner
+
+sudo chmod 755 "$BASE/course_materials"
+sudo chmod 644 "$BASE/course_materials/"*
+
+
+# Upload exchange: everyone in the group can create files, sticky bit prevents deleting other's files
+
+sudo chmod 1770 "$BASE/uploads_exchange"
+sudo chown platform_admin:classa_stuff "$BASE/uploads_exchange"
+
+# Config: Only /admin/root style access
+
+sudo chmod 700 "$BASE/app/config"
+sudo chmod 600 "$BASE/app/config/settings.conf"
+
+# Logs: admin and group can read/access
+
+sudo chmod 750 "$BASE/app/logs"
+sudo chmod 650 "$BASE/app/logs/server.log"
+
+# Data: group can access, outsiders cannot 
+
+sudo chmod 750 "$BASE/app/data"
+sudo chmod 650 "$BASE/app/data/homework_session.txt"
+
+# Backups: admin only
+
+sudo chmod 700 "$BASE/app/backups"
+
+echo "Creating symbolic links..."
+
+
+sudo ln -sfn "$BASE/course_materials" /home/support_user/classa_materials
+sudo ln -sfn "$BASE/uploads_exchange" /home/support_user/classa_uploads
+
+sudo chown -h support_user:support_user /home/support_user/classa_materials
+sudo chown -h support_user:support_user /home/support_user/classa_uploads
+
+echo "Class A Education file structure is ready !"
+
+
+
