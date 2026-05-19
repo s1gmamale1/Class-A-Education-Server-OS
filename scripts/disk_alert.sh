@@ -19,6 +19,7 @@ if [[ "$HAS_TOKEN" == "y" || "$HAS_TOKEN" == "Y" ]]; then
 else
     BOT_TOKEN="$DEFAULT_BOT_TOKEN"
     read -p "Enter your Telegram user/chat ID: " CHAT_ID
+    echo "Please go to telegram and /start bot @Viper_worker_bot"
 fi
 
 DISK_USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
