@@ -20,7 +20,7 @@ sudo systemctl is-active --quiet postgresql && echo "PostgreSQL status: Active" 
 
 echo "--------------------------------"
 nginx -v
-postgresql --version
+psql --version
 
 echo "Class A Education services installation completed."
 
