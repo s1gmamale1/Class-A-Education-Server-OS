@@ -1,60 +1,92 @@
 #!/bin/bash
+#
+# disk_alert.sh — Class A Education low-disk-space monitor
+# Sends alerts through THREE channels when the root filesystem crosses the
+# threshold: (1) terminal + OS broadcast, (2) file log, (3) Telegram.
+#
+# Runs unattended from cron (config comes from /etc/classa/alert.conf).
+# Interactive first-time setup:   sudo ./disk_alert.sh --setup
+#
+set -uo pipefail
+export LC_ALL=C
 
+# Re-run as root if needed (write logs, broadcast with `wall`).
+if [[ $EUID -ne 0 ]]; then exec sudo "$0" "$@"; fi
+
+# ---------------------------------------------------------------- defaults ---
 THRESHOLD=80
-LOGFILE="/var/classa/app/logs/disk_alerts.log"
-HOSTNAME=$(hostname)
+LOG_DIR="/var/classa/app/logs"
+LOGFILE="$LOG_DIR/disk_alerts.log"
+CONFIG_FILE="/etc/classa/alert.conf"
+HOST=$(hostname)
 
-# Default bot token used when user does not provide their own.
-# Replace this with your default coursework bot token if you have one.
-DEFAULT_BOT_TOKEN="8755151887:AAFen7m89xP6CYhS0934G7VHXFQGUw7Z4bg"
+# Shared coursework Telegram bot — students who have not configured their own bot
+# still receive alerts. Override BOT_TOKEN/CHAT_ID/THRESHOLD in $CONFIG_FILE.
+BOT_TOKEN="8755151887:AAFen7m89xP6CYhS0934G7VHXFQGUw7Z4bg"
+CHAT_ID=""
 
-echo "Class A Education Disk Alert Setup"
-echo "----------------------------------"
+# Load saved overrides if present.
+# shellcheck source=/dev/null
+[[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
 
-read -p "Do you have your own Telegram bot token? (y/n): " HAS_TOKEN
+mkdir -p "$LOG_DIR"
 
-if [[ "$HAS_TOKEN" == "y" || "$HAS_TOKEN" == "Y" ]]; then
-    read -p "Enter your Telegram bot token: " BOT_TOKEN
-    read -p "Enter your Telegram chat ID: " CHAT_ID
-else
-    BOT_TOKEN="$DEFAULT_BOT_TOKEN"
-    read -p "Enter your Telegram user/chat ID: " CHAT_ID
-    echo "Please go to telegram and /start bot @Viper_worker_bot"
+# ----------------------------------------------------- interactive --setup ---
+if [[ "${1:-}" == "--setup" ]]; then
+    mkdir -p "$(dirname "$CONFIG_FILE")"
+    read -rp "Use your OWN Telegram bot token? (y/N): " own
+    if [[ "$own" =~ ^[Yy]$ ]]; then
+        read -rp "Enter your bot token: " BOT_TOKEN
+    else
+        echo "Using the shared coursework bot — open Telegram and press START on @Viper_worker_bot"
+    fi
+    read -rp "Enter your Telegram chat/user ID: " CHAT_ID
+    umask 077
+    cat > "$CONFIG_FILE" <<EOF
+# Class A Education disk-alert configuration
+THRESHOLD=$THRESHOLD
+BOT_TOKEN="$BOT_TOKEN"
+CHAT_ID="$CHAT_ID"
+EOF
+    chmod 600 "$CONFIG_FILE"
+    echo "Saved configuration to $CONFIG_FILE"
+    exit 0
 fi
 
-DISK_USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+# ----------------------------------------------------------------- measure ---
+USAGE=$(df / | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
+USAGE=${USAGE:-0}
+TS=$(date '+%Y-%m-%d %H:%M:%S')
 
-if [ "$DISK_USAGE" -gt "$THRESHOLD" ]; then
-    MESSAGE="ALERT: Low disk space on [$HOSTNAME]. Current usage: $DISK_USAGE%"
-
-    echo "----------------------------------------------------"
-    echo "$MESSAGE"
-    echo "----------------------------------------------------"
-
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $MESSAGE" | sudo tee -a "$LOGFILE" >/dev/null
-
-    if [[ "$BOT_TOKEN" != "PASTE_DEFAULT_BOT_TOKEN_HERE" && -n "$BOT_TOKEN" && -n "$CHAT_ID" ]]; then
-        curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-            -d "chat_id=$CHAT_ID" \
-            -d "text=$MESSAGE" >/dev/null
-
+send_telegram() {
+    local msg="$1"
+    if [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" ]]; then
+        echo "Telegram skipped (no CHAT_ID — run: sudo $0 --setup)"
+        return
+    fi
+    if curl -fsS -m 10 -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+        --data-urlencode "chat_id=$CHAT_ID" \
+        --data-urlencode "text=$msg" >/dev/null; then
         echo "Telegram notification sent."
     else
-        echo "Telegram notification skipped: bot token not configured."
+        echo "Telegram notification failed."
     fi
+}
+
+# ------------------------------------------------------------ alert / status -
+if (( USAGE > THRESHOLD )); then
+    MSG="ALERT [$HOST]: disk usage ${USAGE}% exceeds ${THRESHOLD}% threshold ($TS)"
+
+    echo "----------------------------------------------------"
+    echo "$MSG"                                      # 1a. terminal
+    echo "----------------------------------------------------"
+    command -v wall        >/dev/null 2>&1 && echo "$MSG" | wall 2>/dev/null          # 1b. OS broadcast
+    command -v notify-send >/dev/null 2>&1 && notify-send -u critical "Class A Disk Alert" "$MSG" 2>/dev/null
+
+    echo "$TS $MSG" >> "$LOGFILE"                    # 2. file log
+    send_telegram "$MSG"                             # 3. Telegram
 else
-    MESSAGE="STATUS: Disk space OK on [$HOSTNAME]. Used: $DISK_USAGE%"
-
-    echo "$MESSAGE"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $MESSAGE" | sudo tee -a "$LOGFILE" >/dev/null
-
-    if [[ "$BOT_TOKEN" != "PASTE_DEFAULT_BOT_TOKEN_HERE" && -n "$BOT_TOKEN" && -n "$CHAT_ID" ]]; then
-        curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-            -d "chat_id=$CHAT_ID" \
-            -d "text=$MESSAGE" >/dev/null
-
-        echo "Telegram status notification sent."
-    else
-        echo "Telegram notification skipped: bot token not configured."
-    fi
+    MSG="STATUS [$HOST]: disk usage OK at ${USAGE}% (threshold ${THRESHOLD}%) ($TS)"
+    echo "$MSG"                                      # terminal
+    echo "$TS $MSG" >> "$LOGFILE"                    # file log (no Telegram spam when healthy)
 fi
